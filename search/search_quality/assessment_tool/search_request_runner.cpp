@@ -18,8 +18,8 @@ SearchRequestRunner::SearchRequestRunner(Framework & framework, DataSource const
   : m_framework(framework)
   , m_dataSource(dataSource)
   , m_contexts(contexts)
-  , m_updateViewOnResults(move(updateViewOnResults))
-  , m_updateSampleSearchState(move(updateSampleSearchState))
+  , m_updateViewOnResults(std::move(updateViewOnResults))
+  , m_updateSampleSearchState(std::move(updateSampleSearchState))
 {
 }
 
@@ -138,7 +138,7 @@ void SearchRequestRunner::RunRequest(size_t index, bool background, size_t times
 
   search::SearchParams params;
   sample.FillSearchParams(params);
-  params.m_onResults = [=](search::Results const & results)
+  params.m_onResults = [=, this](search::Results const & results)
   {
     vector<optional<ResultsEdits::Relevance>> relevances;
     vector<size_t> goldenMatching;

@@ -5,7 +5,6 @@
 
 #include <algorithm>
 #include <map>
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -55,7 +54,7 @@ public:
   void AddSubtree(Char const & c, std::unique_ptr<Subtree> subtree)
   {
     ASSERT(!GetSubtree(c), ());
-    m_subtrees.emplace(c, move(subtree));
+    m_subtrees.emplace(c, std::move(subtree));
   }
 
   void EraseSubtree(Char const & c) { m_subtrees.erase(c); }
@@ -204,7 +203,7 @@ public:
   public:
     using Char = MemTrie::Char;
 
-    Iterator(MemTrie::Node const & node) : m_node(node) {}
+    Iterator(Node const & node) : m_node(node) {}
 
     // Iterates over all possible moves from this Iterator's node
     // and calls |toDo| with two arguments:
@@ -226,7 +225,7 @@ public:
     ValuesHolder const & GetValues() const { return m_node.m_values; }
 
   private:
-    MemTrie::Node const & m_node;
+    Node const & m_node;
   };
 
   // Adds a key-value pair to the trie.

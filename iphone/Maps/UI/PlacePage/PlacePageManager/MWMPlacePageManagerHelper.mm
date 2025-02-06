@@ -15,6 +15,8 @@
 - (void)addBusiness;
 - (void)addPlace:(CLLocationCoordinate2D)coordinate;
 - (void)openWebsite:(PlacePageData *)data;
+- (void)openWebsiteMenu:(PlacePageData *)data;
+- (void)openKayak:(PlacePageData *)data;
 - (void)openWikipedia:(PlacePageData *)data;
 - (void)openWikimediaCommons:(PlacePageData *)data;
 - (void)openEmail:(PlacePageData *)data;
@@ -22,6 +24,7 @@
 - (void)openInstagram:(PlacePageData *)data;
 - (void)openTwitter:(PlacePageData *)data;
 - (void)openVk:(PlacePageData *)data;
+- (void)openLine:(PlacePageData *)data;
 - (void)call:(PlacePageData *)data;
 - (void)showAllFacilities:(PlacePageData *)data;
 - (void)showPlaceDescription:(NSString *)htmlString;
@@ -32,10 +35,11 @@
 - (void)openCatalogMoreItems:(PlacePageData *)data;
 - (void)addBookmark:(PlacePageData *)data;
 - (void)removeBookmark:(PlacePageData *)data;
+- (void)removeTrack:(PlacePageData *)data;
 - (void)editBookmark:(PlacePageData *)data;
+- (void)editTrack:(PlacePageData *)data;
 - (void)searchBookingHotels:(PlacePageData *)data;
 - (void)book:(PlacePageData *)data;
-- (void)share:(PlacePageData *)data;
 - (void)routeFrom:(PlacePageData *)data;
 - (void)routeTo:(PlacePageData *)data;
 - (void)routeAddStop:(PlacePageData *)data;
@@ -70,6 +74,14 @@
   [[MWMMapViewControlsManager manager].placePageManager openWebsite:data];
 }
 
++ (void)openWebsiteMenu:(PlacePageData *)data {
+  [[MWMMapViewControlsManager manager].placePageManager openWebsiteMenu:data];
+}
+
++ (void)openKayak:(PlacePageData *)data {
+  [[MWMMapViewControlsManager manager].placePageManager openKayak:data];
+}
+
 + (void)openEmail:(PlacePageData *)data {
   [[MWMMapViewControlsManager manager].placePageManager openEmail:data];
 }
@@ -96,6 +108,10 @@
 
 + (void)openVk:(PlacePageData *)data {
   [[MWMMapViewControlsManager manager].placePageManager openVk:data];
+}
+
++ (void)openLine:(PlacePageData *)data {
+  [[MWMMapViewControlsManager manager].placePageManager openLine:data];
 }
 
 + (void)call:(PlacePageData *)data {
@@ -138,8 +154,16 @@
   [[MWMMapViewControlsManager manager].placePageManager removeBookmark:data];
 }
 
++ (void)removeTrack:(PlacePageData *)data {
+  [[MWMMapViewControlsManager manager].placePageManager removeTrack:data];
+}
+
 + (void)editBookmark:(PlacePageData *)data {
   [[MWMMapViewControlsManager manager].placePageManager editBookmark:data];
+}
+
++ (void)editTrack:(PlacePageData *)data {
+  [[MWMMapViewControlsManager manager].placePageManager editTrack:data];
 }
 
 + (void)searchBookingHotels:(PlacePageData *)data {
@@ -148,10 +172,6 @@
 
 + (void)book:(PlacePageData *)data {
   [[MWMMapViewControlsManager manager].placePageManager book:data];
-}
-
-+ (void)share:(PlacePageData *)data {
-  [[MWMMapViewControlsManager manager].placePageManager share:data];
 }
 
 + (void)routeFrom:(PlacePageData *)data {

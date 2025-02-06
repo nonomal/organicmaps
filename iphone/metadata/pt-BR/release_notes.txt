@@ -1,24 +1,20 @@
-• Novos dados OSM de 16 de dezembro
-• Melhoria no algoritmo de roteamento
-• Não há mais rotas usando highway=construction :)
-• Suporte à múltiplas geometrias em arquivos KML
-• Correção de importação de arquivo KML 2.3 do OpenTracks
-• Análise e renderização mais rápidas de trilhas KML complexas
-• Permitir adicionar algumas lojas, galerias e escolas de música no Editor
-• Melhoria nas fronteiras municipais nos resultados da busca
-• Cabeçalhos de configurações e opções de rotas agora estão visíveis no modo noturno
-• Correção na falha ao exibir o menu
+• Novos dados do OpenStreetMap de 21 de janeiro
+• Toque nas trilhas para exibir estatísticas e um perfil de elevação interativo
+• Um botão de Gravação de Trilha independente
+• Widget de Atividade ao Vivo de Gravação de Trilha com estatísticas de trilha (iOS 16.2 e posterior)
+• Adicionados idiomas sérvio (cirílico) e letão
+• Adicionados POIs de torre
 
-Estilos de mapa:
-• Ícones aprimorados e menos brilhantes no modo noturno
-• Correção dos ícones de metrô em algumas cidades
-• Exibição adequada das barreiras para as áreas e relações
-• Nomes duplicados corrigidos no mapa-múndi
-• Atualização dos ícones de boate, caverna, estádio, loja de música, navio histórico, passo de montanha, pico, sorvete, telefone de emergência, videogame e vulcão
-• Correção nas prioridades de leisure=pitch, historic, post office
-• Ícones redondos/preenchidos mais consistentes (redondo significa algum tipo de negócio/serviço)
-
-Traduções:
-• Adição e correção de conversão de texto em fala (TTS) para espanhol mexicano, norueguês e português brasileiro e europeu
-• Correção de buscas em alemão e húngaro
-• Traduções atualizadas para espanhol e checo
+• Adicionados ícones específicos para Hong Kong, metrô de Shenzhen e VLT de Berlim, um ícone de monotrilho separado
+• Adicionado um menu de contexto ao botão de coordenadas em detalhes de POI
+• Mostrar um pop-up de lembrete sempre que um modo de tela cheia for inserido
+• Exibir uma explicação quando a pesquisa de categoria do Editor OSM não retornar nada
+• Diferenciar entre cores de grama e pradaria/prado
+• Cor de jardins residenciais menos saturada/proeminente
+• Corrigidos escudos de estrada amarelos exibidos como verdes no modo noturno
+• Exibir preenchimentos de vegetação mais cedo no estilo de navegação do carro
+• Exibir níveis complexos não numéricos para construir POIs
+• Melhorar a pesquisa de picos e selas/passagens
+• Inglês como idioma de pesquisa adicional no Editor OSM
+• Atualização de traduções em alemão, estoniano, finlandês, italiano, turco
+• ... e muito mais correções de bugs e melhorias na IU

@@ -1,8 +1,7 @@
 #include "testing/testing.hpp"
 
 #include "search/keyword_lang_matcher.hpp"
-
-#include "indexer/search_string_utils.hpp"
+#include "search/string_utils.hpp"
 
 #include <vector>
 
@@ -35,23 +34,11 @@ KeywordLangMatcher CreateMatcher(string const & query)
     // langPriorities[3] is intentionally left empty.
 
     for (size_t i = 0; i < langPriorities.size(); ++i)
-      matcher.SetLanguages(i /* tier */, move(langPriorities[i]));
+      matcher.SetLanguages(i /* tier */, std::move(langPriorities[i]));
   }
 
-  vector<strings::UniString> keywords;
-  strings::UniString prefix;
-  if (search::TokenizeStringAndCheckIfLastTokenIsPrefix(query, keywords))
-  {
-    prefix = keywords.back();
-    keywords.pop_back();
-  }
-  matcher.SetKeywords(&keywords[0], keywords.size(), prefix);
-
+  matcher.SetKeywords(search::MakeQueryString(query));
   return matcher;
-}
-
-UNIT_TEST(KeywordMatcher_TokensMatchHasPriority)
-{
 }
 
 UNIT_TEST(KeywordMatcher_LanguageMatchIsUsedWhenTokenMatchIsTheSame)

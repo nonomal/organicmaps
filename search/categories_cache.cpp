@@ -1,26 +1,20 @@
 #include "search/categories_cache.hpp"
 
 #include "search/mwm_context.hpp"
-#include "search/query_params.hpp"
 #include "search/retrieval.hpp"
 
 #include "indexer/classificator.hpp"
 #include "indexer/ftypes_matcher.hpp"
 #include "indexer/search_string_utils.hpp"
 
-#include "base/assert.hpp"
-#include "base/levenshtein_dfa.hpp"
-
-using namespace std;
 
 namespace search
 {
+using namespace std;
+
 // CategoriesCache ---------------------------------------------------------------------------------
 CBV CategoriesCache::Get(MwmContext const & context)
 {
-  CHECK(context.m_handle.IsAlive(), ());
-  ASSERT(context.m_value.HasSearchIndex(), ());
-
   auto const id = context.m_handle.GetId();
   auto const it = m_cache.find(id);
   if (it != m_cache.cend())
@@ -33,9 +27,6 @@ CBV CategoriesCache::Get(MwmContext const & context)
 
 CBV CategoriesCache::Load(MwmContext const & context) const
 {
-  ASSERT(context.m_handle.IsAlive(), ());
-  ASSERT(context.m_value.HasSearchIndex(), ());
-
   auto const & c = classif();
 
   // Any DFA will do, since we only use requests's m_categories,

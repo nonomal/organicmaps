@@ -268,7 +268,7 @@ bool HttpClient::RunHttpRequest()
       }
     }
   }
-  m_headers.emplace("Set-Cookie", NormalizeServerCookies(move(serverCookies)));
+  m_headers.emplace("Set-Cookie", NormalizeServerCookies(std::move(serverCookies)));
 
   if (m_urlReceived.empty())
   {
@@ -278,9 +278,9 @@ bool HttpClient::RunHttpRequest()
     if (m_outputFile.empty())
       m_serverResponse = ReadFileAsString(rfile);
   }
-  else
+  else if (m_followRedirects)
   {
-    // Handle HTTP redirect.
+    // Follow HTTP redirect.
     // TODO(AlexZ): Should we check HTTP redirect code here?
     LOG(LDEBUG, ("HTTP redirect", m_errorCode, "to", m_urlReceived));
 
@@ -295,8 +295,8 @@ bool HttpClient::RunHttpRequest()
 
     m_errorCode = redirect.ErrorCode();
     m_urlReceived = redirect.UrlReceived();
-    m_headers = move(redirect.m_headers);
-    m_serverResponse = move(redirect.m_serverResponse);
+    m_headers = std::move(redirect.m_headers);
+    m_serverResponse = std::move(redirect.m_serverResponse);
   }
 
   for (auto const & header : headers)

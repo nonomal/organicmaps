@@ -29,12 +29,6 @@ public:
   virtual std::unique_ptr<Reader> CreateSubReader(uint64_t pos, uint64_t size) const = 0;
 
   void ReadAsString(std::string & s) const;
-
-  // Reads the contents of this Reader to a vector of 8-bit bytes.
-  // Similar to ReadAsString but makes no assumptions about the char type.
-  std::vector<uint8_t> ReadAsBytes() const;
-
-  static bool IsEqual(std::string const & name1, std::string const & name2);
 };
 
 // Reader from memory.
@@ -45,6 +39,11 @@ public:
   // Construct from block of memory.
   MemReaderTemplate(void const * pData, size_t size)
     : m_pData(static_cast<char const *>(pData)), m_size(size)
+  {
+  }
+
+  explicit MemReaderTemplate(std::string_view data)
+    : m_pData{data.data()}, m_size{data.size()}
   {
   }
 
@@ -288,9 +287,8 @@ inline void ReadFromPos(TReader const & reader, uint64_t pos, void * p, size_t s
 template <typename TPrimitive, class TReader>
 inline TPrimitive ReadPrimitiveFromPos(TReader const & reader, uint64_t pos)
 {
-#ifndef OMIM_OS_LINUX
   static_assert(std::is_trivially_copyable<TPrimitive>::value);
-#endif
+
   TPrimitive primitive;
   ReadFromPos(reader, pos, &primitive, sizeof(primitive));
   return SwapIfBigEndianMacroBased(primitive);
@@ -299,9 +297,8 @@ inline TPrimitive ReadPrimitiveFromPos(TReader const & reader, uint64_t pos)
 template <typename TPrimitive, class TSource>
 TPrimitive ReadPrimitiveFromSource(TSource & source)
 {
-#ifndef OMIM_OS_LINUX
   static_assert(std::is_trivially_copyable<TPrimitive>::value);
-#endif
+
   TPrimitive primitive;
   source.Read(&primitive, sizeof(primitive));
   return SwapIfBigEndianMacroBased(primitive);

@@ -1,25 +1,20 @@
-• Nová OpenStreetMap data z 16. prosince 2022
-• Vylepšen směrovací algoritmus
-• Nesměrovat přes highway=construction :)
-• Podpora několika geometrických stezek v KML souborech
-• Opraven KML 2.3 import stezek z OpenTracks
-• Rychlejší zpracování a vykreslování komplexních KML stezek
-• Povoleno přidávání obchodů, galerií, hudebních škol v Editoru
-• Upraveny hranice měst ve výsledcích vyhledávání
-• Nadpisy nastavení & možností směrovače jsou nyní viditelné v Tmavém režimu
-• Vyřešen pád aplikace při zobrazování menu
+• New OpenStreetMap data as of January 21
+• Tap tracks to display statistics and an interactive elevation profile
+• A standalone Track Recording button
+• Track Recording Live Activity Widget with track statistics (iOS16.2 and later)
+• Added Serbian (Cyrillic) and Latvian languages
+• Added tower POIs
 
-Styly Mapy:
-• Vylepšené, méně světlé ikonky v Tmavém režimu
-• Opraveny ikonky metra v některých městech
-• Správně kreslit bariéry pro plochy a relace
-• Odstraněny duplikované názvy ze světové mapy
-• Aktualizovány ikonky jeskyní, horských průsmyků, vrcholů, volkán, tísňových telefonů, historických lodí, zmrzlin, nočních klubů, hudebních obchodů, stadionů, videoher
-• Opraveny nesprávné priority leisure=pitch, historic, post office
-• Více konzistentní vyplněné/kulaté ikonky (kulaté značí nějaký obchod/službu)
-
-Překlady:
-• TTS (Text-To-Speech) pro brazilštinu, mexickou španělštinu a norštinu
-• Upraveny německé a maďarské řetězce pro vyhledávání
-• Aktualizováno TTS pro portugalštinu a brazilštinu
-• Aktualizovány české, španělské překlady
+• Added specific icons for Hong Kong, Shenzhen metro and Berlin light rail, a separate monorail icon
+• Added a context menu to the coordinates button in POI details
+• Show a reminder popup every time a full screen mode is entered
+• Display an explanation when the OSM Editor category search returns nothing
+• Differentiate between grass and grassland/meadow colors
+• Less saturated/prominent residential gardens color
+• Fixed yellow road shields displayed as green in the night mode
+• Display vegetation fills earlier in the car navigation style
+• Display complex non-number levels for building POIs
+• Improve search for peaks and saddles/passes
+• EN as additional search language in the OSM Editor
+• Update Estonian, Finnish, German, Italian, Turkish translations
+• ...many more bug fixes and UI improvements

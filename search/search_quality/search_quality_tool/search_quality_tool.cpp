@@ -39,7 +39,7 @@
 #include <string>
 #include <vector>
 
-#include "gflags/gflags.h"
+#include <gflags/gflags.h>
 
 using namespace search::search_quality;
 using namespace search::tests_support;
@@ -94,7 +94,7 @@ struct CompletenessQuery
 
     string mwmName = parts[0].substr(0, idx);
     string const kMwmSuffix = ".mwm";
-    if (!strings::EndsWith(mwmName, kMwmSuffix))
+    if (!mwmName.ends_with(kMwmSuffix))
       MYTHROW(MalformedQueryException, ("Bad mwm name:", s));
 
     string const featureIdStr = parts[0].substr(idx + 1);
@@ -246,10 +246,10 @@ void CheckCompleteness(string const & path, DataSource & dataSource, TestSearchE
     ++totalQueries;
     try
     {
-      CompletenessQuery q(move(line));
+      CompletenessQuery q(std::move(line));
       q.m_request =
           make_unique<TestSearchRequest>(engine, q.m_query, locale, Mode::Everywhere, viewport);
-      queries.push_back(move(q));
+      queries.push_back(std::move(q));
     }
     catch (CompletenessQuery::MalformedQueryException & e)
     {

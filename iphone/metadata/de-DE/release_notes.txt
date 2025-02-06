@@ -1,25 +1,20 @@
-• New OpenStreetMap data as of December 16, 2022
-• Improved routing algorithm
-• Do not route over highway=construction :)
-• Support multiple track geometry in KML files
-• Fixed KML 2.3 track import from OpenTracks
-• Faster parsing and rendering of complex KML tracks
-• Allow adding some shops, galleries, music schools in Editor
-• Improved city borders in search results
-• Settings & routing options headers are visible now in the Night Mode
-• Fixed crash when displaying the menu
+• Neue OpenStreetMap-Daten vom 8. Januar
+• Tippen Sie auf Tracks, um Statistiken und ein interaktives Höhenprofil anzuzeigen
+• Eine eigenständige Schaltfläche zur Trackaufzeichnung
+• Track-Aufzeichnung – Live-Aktivitäts-Widget mit Track-Statistiken (iOS 16.2 und höher)
+• Serbische (Kyrillisch) und Lettische Sprachen hinzugefügt
+• Turm-POIs hinzugefügt
 
-Map Styles:
-• Improved, less bright icons in Night mode
-• Fixed subway icons in some cities
-• Properly draw barriers for areas and relations
-• Fixed duplicated names on the world map
-• Updated cave, mountain pass, peak, volcano, emergency phone, historic ship, ice cream, nightclub, music shop, stadium, video games icons
-• Fixed wrong priorities of leisure=pitch, historic, post office
-• More consistent filled/round icons (round means some kind of business/service)
-
-Translations:
-• TTS (Text-To-Speech) for Brazil, Mexican Spanish and Norwegian
-• Fixed German and Hungarian search strings
-• Updated TTS for Portuguese and Brazilian
-• Updated Czech, Spanish translations
+• Spezielle Symbole für die U-Bahnen Hongkong und Shenzhen sowie die Stadtbahn Berlin hinzugefügt, ein separates Monorail-Symbol
+• Dem Koordinaten-Button in den POI-Details wurde ein Kontextmenü hinzugefügt
+• Bei jedem Wechsel in den Vollbildmodus ein Erinnerungs-Popup anzeigen
+• Eine Erklärung anzeigen, wenn die Kategoriesuche im OSM-Editor nichts ergibt
+• Unterscheiden Sie zwischen Gras- und Grünland-/Wiesenfarben
+• Weniger gesättigte/auffällige Farbe in Wohngärten
+• Gelbe Straßenschilder wurden korrigiert, sodass sie im Nachtmodus grün angezeigt wurden
+• Vegetationsfüllungen im Autonavigationsstil früher anzeigen
+• Anzeige komplexer Nicht-Zahlenebenen zum Erstellen von POIs
+• Verbesserte Suche nach Gipfeln und Sätteln/Pässen
+• EN als zusätzliche Suchsprache im OSM-Editor
+• Aktualisieren Sie die estnischen, finnischen, deutschen, italienischen und türkischen Übersetzungen
+• ...viele weitere Fehlerbehebungen und UI-Verbesserungen

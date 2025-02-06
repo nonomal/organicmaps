@@ -29,6 +29,8 @@ set(SRC
   complex/tree_node.hpp
   cuisines.cpp
   cuisines.hpp
+  custom_keyvalue.cpp
+  custom_keyvalue.hpp
   data_factory.cpp
   data_factory.hpp
   data_header.cpp
@@ -49,6 +51,8 @@ set(SRC
   drules_selector_parser.hpp
   drules_struct.pb.cc
   drules_struct.pb.h
+  edit_journal.cpp
+  edit_journal.hpp
   editable_map_object.cpp
   editable_map_object.hpp
   fake_feature_ids.cpp
@@ -91,6 +95,8 @@ set(SRC
   interval_index_builder.hpp
   isolines_info.cpp
   isolines_info.hpp
+  kayak.cpp
+  kayak.hpp
   map_object.cpp
   map_object.hpp
   map_style.cpp
@@ -148,8 +154,6 @@ set_source_files_properties(drules_struct.pb.cc PROPERTIES COMPILE_FLAGS
 file(COPY ${OTHER_FILES} DESTINATION ${CMAKE_BINARY_DIR})
 
 omim_add_library(${PROJECT_NAME} ${SRC})
-
-add_subdirectory(${OMIM_ROOT}/3party/protobuf ${CMAKE_CURRENT_BINARY_DIR}/protobuf)
 
 target_link_libraries(${PROJECT_NAME}
   search  # search::DummyRankTable in CachingRankTableLoader

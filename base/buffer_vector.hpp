@@ -1,24 +1,24 @@
 #pragma once
+
 #include "base/assert.hpp"
 #include "base/checked_cast.hpp"
 
 #include <algorithm>
-#include <cstring>       // for memcpy
 #include <iterator>
-#include <type_traits>
-#include <utility>
 #include <vector>
 
 // Calls swap() function using argument dependant lookup.
 // // Do NOT override this function, but override swap() function instead!
-template <typename T> inline void Swap(T & a, T & b)
+template <typename T>
+void Swap(T & a, T & b)
 {
   using std::swap;
   swap(a, b);
 }
 
 
-template <class T, size_t N> class buffer_vector
+template <class T, size_t N>
+class buffer_vector
 {
 private:
   enum { USE_DYNAMIC = N + 1 };
@@ -27,10 +27,12 @@ private:
   size_t m_size;
   std::vector<T> m_dynamic;
 
-  inline bool IsDynamic() const { return m_size == USE_DYNAMIC; }
+  bool IsDynamic() const { return m_size == USE_DYNAMIC; }
 
-  void MoveStatic(buffer_vector<T, N> & rhs)
+  void MoveStatic(buffer_vector & rhs) noexcept
   {
+    static_assert(std::is_nothrow_move_assignable<T>::value);
+
     std::move(rhs.m_static, rhs.m_static + rhs.m_size, m_static);
   }
 
@@ -74,7 +76,7 @@ public:
 
   buffer_vector(buffer_vector const &) = default;
 
-  buffer_vector(buffer_vector && rhs) : m_size(rhs.m_size), m_dynamic(std::move(rhs.m_dynamic))
+  buffer_vector(buffer_vector && rhs) noexcept : m_size(rhs.m_size), m_dynamic(std::move(rhs.m_dynamic))
   {
     if (!IsDynamic())
       MoveStatic(rhs);
@@ -84,15 +86,18 @@ public:
 
   buffer_vector & operator=(buffer_vector const & rhs) = default;
 
-  buffer_vector & operator=(buffer_vector && rhs)
+  buffer_vector & operator=(buffer_vector && rhs) noexcept
   {
-    m_size = rhs.m_size;
-    m_dynamic = move(rhs.m_dynamic);
+    if (this != &rhs)
+    {
+      m_size = rhs.m_size;
+      m_dynamic = std::move(rhs.m_dynamic);
 
-    if (!IsDynamic())
-      MoveStatic(rhs);
+      if (!IsDynamic())
+        MoveStatic(rhs);
 
-    rhs.m_size = 0;
+      rhs.m_size = 0;
+    }
     return *this;
   }
 
@@ -252,16 +257,19 @@ public:
     ASSERT(!empty(), ());
     return *begin();
   }
+
   T & front()
   {
     ASSERT(!empty(), ());
     return *begin();
   }
+
   T const & back() const
   {
     ASSERT(!empty(), ());
     return *(end() - 1);
   }
+
   T & back()
   {
     ASSERT(!empty(), ());
@@ -273,6 +281,7 @@ public:
     ASSERT_LESS(i, size(), ());
     return *(begin() + i);
   }
+
   T & operator[](size_t i)
   {
     ASSERT_LESS(i, size(), ());
@@ -363,7 +372,7 @@ public:
 
       m_size += n;
       T * writableWhere = &m_static[0] + pos;
-      ASSERT_EQUAL(where, writableWhere, ());
+      ASSERT(where == writableWhere, ());
       while (beg != end)
         *(writableWhere++) = *(beg++);
     }
@@ -374,7 +383,7 @@ public:
     }
   }
 
-  inline void insert(const_iterator where, value_type const & value)
+  void insert(const_iterator where, value_type const & value)
   {
     insert(where, &value, &value + 1);
   }
@@ -424,31 +433,31 @@ void swap(buffer_vector<T, N> & r1, buffer_vector<T, N> & r2)
 }
 
 template <typename T, size_t N>
-inline std::string DebugPrint(buffer_vector<T, N> const & v)
+std::string DebugPrint(buffer_vector<T, N> const & v)
 {
   return DebugPrintSequence(v.data(), v.data() + v.size());
 }
 
 template <typename T, size_t N1, size_t N2>
-inline bool operator==(buffer_vector<T, N1> const & v1, buffer_vector<T, N2> const & v2)
+bool operator==(buffer_vector<T, N1> const & v1, buffer_vector<T, N2> const & v2)
 {
   return (v1.size() == v2.size() && std::equal(v1.begin(), v1.end(), v2.begin()));
 }
 
 template <typename T, size_t N1, size_t N2>
-inline bool operator!=(buffer_vector<T, N1> const & v1, buffer_vector<T, N2> const & v2)
+bool operator!=(buffer_vector<T, N1> const & v1, buffer_vector<T, N2> const & v2)
 {
   return !(v1 == v2);
 }
 
 template <typename T, size_t N1, size_t N2>
-inline bool operator<(buffer_vector<T, N1> const & v1, buffer_vector<T, N2> const & v2)
+bool operator<(buffer_vector<T, N1> const & v1, buffer_vector<T, N2> const & v2)
 {
   return std::lexicographical_compare(v1.begin(), v1.end(), v2.begin(), v2.end());
 }
 
 template <typename T, size_t N1, size_t N2>
-inline bool operator>(buffer_vector<T, N1> const & v1, buffer_vector<T, N2> const & v2)
+bool operator>(buffer_vector<T, N1> const & v1, buffer_vector<T, N2> const & v2)
 {
   return v2 < v1;
 }
@@ -473,3 +482,8 @@ typename buffer_vector<T, N>::const_iterator end(buffer_vector<T, N> const & v)
   return v.end();
 }
 }  // namespace std
+
+template <class Dest, class Src> void assign_range(Dest & dest, Src const & src)
+{
+  dest.assign(std::begin(src), std::end(src));
+}

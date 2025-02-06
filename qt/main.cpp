@@ -2,36 +2,34 @@
 #include "qt/mainwindow.hpp"
 #include "qt/screenshoter.hpp"
 
+#include "qt/qt_common/helpers.hpp"
+
 #include "map/framework.hpp"
 
 #include "platform/platform.hpp"
 #include "platform/settings.hpp"
 
-#include "coding/file_reader.hpp"
+#include "coding/reader.hpp"
 
 #include "base/logging.hpp"
 #include "base/macros.hpp"
 
 #include "build_style/build_style.h"
 
-#include <cstdio>
-#include <cstdlib>
-#include <sstream>
-
-#include "gflags/gflags.h"
-
-#include <QtCore/QDir>
-#include <QtGui/QScreen>
+#include <QtGlobal>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QFileDialog>
 
+#include <sstream>
+
+#include <gflags/gflags.h>
+
+
 DEFINE_string(data_path, "", "Path to data directory.");
-DEFINE_string(log_abort_level, base::ToString(base::GetDefaultLogAbortLevel()),
-              "Log messages severity that causes termination.");
+DEFINE_string(log_abort_level, base::ToString(base::GetDefaultLogAbortLevel()), "Log messages severity that causes termination.");
 DEFINE_string(resources_path, "", "Path to resources directory.");
-DEFINE_string(kml_path, "", "Activates screenshot mode. Path to a kml file or a directory "
-              "with kml files to take screenshots.");
+DEFINE_string(kml_path, "", "Activates screenshot mode. Path to a kml file or a directory with kml files to take screenshots.");
 DEFINE_string(points, "", "Activates screenshot mode. Points on the map and zoom level "
               "[1..18] in format \"lat,lon,zoom[;lat,lon,zoom]\" or path to a file with points in "
               "the same format. Each point and zoom define a place on the map to take screenshot.");
@@ -43,36 +41,29 @@ DEFINE_string(dst_path, "", "Path to a directory to save screenshots.");
 DEFINE_string(lang, "", "Device language.");
 DEFINE_int32(width, 0, "Screenshot width.");
 DEFINE_int32(height, 0, "Screenshot height.");
-DEFINE_double(dpi_scale, 0.0, "Screenshot dpi scale (mdpi = 1.0, hdpi = 1.5, "
-              "xhdpiScale = 2.0, 6plus = 2.4, xxhdpi = 3.0, xxxhdpi = 3.5).");
-
-using namespace std;
+DEFINE_double(dpi_scale, 0.0, "Screenshot dpi scale (mdpi = 1.0, hdpi = 1.5, xhdpiScale = 2.0, 6plus = 2.4, xxhdpi = 3.0, xxxhdpi = 3.5).");
 
 namespace
 {
-bool ValidateLogAbortLevel(char const * flagname, string const & value)
+bool ValidateLogAbortLevel(char const * flagname, std::string const & value)
 {
-  base::LogLevel level;
-  if (!base::FromString(value, level))
+  if (auto level = base::FromString(value); !level)
   {
-    ostringstream os;
+    std::cerr << "Invalid value for --" << flagname << ": "<< value << ", must be one of: ";
     auto const & names = base::GetLogLevelNames();
     for (size_t i = 0; i < names.size(); ++i)
     {
       if (i != 0)
-        os << ", ";
-      os << names[i];
+        std::cerr << ", ";
+      std::cerr << names[i];
     }
-
-    printf("Invalid value for --%s: %s, must be one of: %s\n", flagname, value.c_str(),
-           os.str().c_str());
+    std::cerr << '\n';
     return false;
   }
   return true;
 }
 
-bool const g_logAbortLevelDummy =
-    gflags::RegisterFlagValidator(&FLAGS_log_abort_level, &ValidateLogAbortLevel);
+bool const g_logAbortLevelDummy = gflags::RegisterFlagValidator(&FLAGS_log_abort_level, &ValidateLogAbortLevel);
 
 class FinalizeBase
 {
@@ -119,7 +110,8 @@ int main(int argc, char * argv[])
 
   Platform & platform = GetPlatform();
 
-  LOG(LINFO, ("Organic Maps", platform.Version(), "started, detected CPU cores:", platform.CpuCores()));
+  LOG(LINFO, ("Organic Maps", platform.Version(), "built with QT:", QT_VERSION_STR, "runtime QT:", qVersion(),
+    "detected CPU cores:", platform.CpuCores()));
 
   gflags::SetUsageMessage("Desktop application.");
   gflags::SetVersionString(platform.Version());
@@ -130,9 +122,10 @@ int main(int argc, char * argv[])
   if (!FLAGS_data_path.empty())
     platform.SetWritableDirForTests(FLAGS_data_path);
 
-  base::LogLevel level;
-  CHECK(base::FromString(FLAGS_log_abort_level, level), ());
-  base::g_LogAbortLevel = level;
+  if (auto const logLevel = base::FromString(FLAGS_log_abort_level); logLevel)
+    base::g_LogAbortLevel = *logLevel;
+  else
+    LOG(LCRITICAL, ("Invalid log level:", FLAGS_log_abort_level));
 
   Q_INIT_RESOURCE(resources_common);
 
@@ -140,22 +133,37 @@ int main(int argc, char * argv[])
   UNUSED_VALUE(mainGuard);
 
   QApplication app(argc, argv);
-  // Pretty icons on HDPI displays.
-  QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
-
+  app.setDesktopFileName("app.organicmaps.desktop");
   platform.SetupMeasurementSystem();
+
+
+#ifdef BUILD_DESIGNER
+    QApplication::setApplicationName("Organic Maps Designer");
+#else
+    QApplication::setApplicationName("Organic Maps");
+#endif
+
+
+#ifdef DEBUG
+  static bool constexpr developerMode = true;
+#else
+  static bool constexpr developerMode = false;
+#endif
+  bool outvalue;
+  if (!settings::Get(settings::kDeveloperMode, outvalue))
+    settings::Set(settings::kDeveloperMode, developerMode);
 
   // Display EULA if needed.
   char const * settingsEULA = "EulaAccepted";
   bool eulaAccepted = false;
   if (!settings::Get(settingsEULA, eulaAccepted) || !eulaAccepted)
   {
-    string buffer;
+    std::string buffer;
     {
       ReaderPtr<Reader> reader = platform.GetReader("copyright.html");
       reader.ReadAsString(buffer);
     }
-    qt::InfoDialog eulaDialog(qAppName(), buffer.c_str(), nullptr, {"Accept", "Decline"});
+    qt::InfoDialog eulaDialog(QCoreApplication::applicationName(), buffer.c_str(), nullptr, {"Accept", "Decline"});
     eulaAccepted = (eulaDialog.exec() == 1);
     settings::Set(settingsEULA, eulaAccepted);
   }
@@ -163,18 +171,7 @@ int main(int argc, char * argv[])
   int returnCode = -1;
   if (eulaAccepted)   // User has accepted EULA
   {
-    bool apiOpenGLES3 = false;
     std::unique_ptr<qt::ScreenshotParams> screenshotParams;
-
-#if defined(OMIM_OS_MAC)
-    apiOpenGLES3 = app.arguments().contains("es3", Qt::CaseInsensitive);
-#elif defined(OMIM_OS_LINUX)
-    // TODO: Implement proper runtime version detection in a separate commit
-    // Currently on Linux in a maximum ES2 scenario,
-    // the GL function pointers wouldn't be properly resolved anyway,
-    // so here at least a possibly successful path is chosen.
-    apiOpenGLES3 = true;
-#endif
 
     if (!FLAGS_lang.empty())
       (void)::setenv("LANGUAGE", FLAGS_lang.c_str(), 1);
@@ -207,7 +204,7 @@ int main(int argc, char * argv[])
         screenshotParams->m_dpiScale = FLAGS_dpi_scale;
     }
 
-    qt::MainWindow::SetDefaultSurfaceFormat(apiOpenGLES3);
+    qt::common::SetDefaultSurfaceFormat(QApplication::platformName());
 
     FrameworkParams frameworkParams;
 
@@ -216,10 +213,7 @@ int main(int argc, char * argv[])
     if (argc >= 2 && platform.IsFileExistsByFullPath(argv[1]))
         mapcssFilePath = argv[1];
     if (0 == mapcssFilePath.length())
-    {
-      mapcssFilePath = QFileDialog::getOpenFileName(nullptr, "Open style.mapcss file", "~/",
-                                                    "MapCSS Files (*.mapcss)");
-    }
+      mapcssFilePath = QFileDialog::getOpenFileName(nullptr, "Open style.mapcss file", "~/", "MapCSS Files (*.mapcss)");
     if (mapcssFilePath.isEmpty())
       return returnCode;
 
@@ -241,14 +235,13 @@ int main(int argc, char * argv[])
 #endif // BUILD_DESIGNER
 
     Framework framework(frameworkParams);
-    qt::MainWindow w(framework, apiOpenGLES3, std::move(screenshotParams),
-                     app.primaryScreen()->geometry()
+    qt::MainWindow w(framework, std::move(screenshotParams), QApplication::primaryScreen()->geometry()
 #ifdef BUILD_DESIGNER
                      , mapcssFilePath
 #endif // BUILD_DESIGNER
                      );
     w.show();
-    returnCode = app.exec();
+    returnCode = QApplication::exec();
   }
 
 #ifdef BUILD_DESIGNER
@@ -270,6 +263,6 @@ int main(int argc, char * argv[])
   }
 #endif // BUILD_DESIGNER
 
-  LOG_SHORT(LINFO, ("OMaps finished with code", returnCode));
+  LOG_SHORT(LINFO, ("Organic Maps finished with code", returnCode));
   return returnCode;
 }

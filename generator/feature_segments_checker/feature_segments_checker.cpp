@@ -4,18 +4,13 @@
 
 #include "indexer/classificator_loader.hpp"
 #include "indexer/feature.hpp"
-#include "indexer/feature_altitude.hpp"
 #include "indexer/feature_processor.hpp"
-#include "indexer/map_style_reader.hpp"
 
 #include "geometry/mercator.hpp"
 #include "geometry/point2d.hpp"
 #include "geometry/point_with_altitude.hpp"
 
-#include "platform/platform.hpp"
-
 #include "base/checked_cast.hpp"
-#include "base/file_name_utils.hpp"
 #include "base/logging.hpp"
 #include "base/math.hpp"
 
@@ -23,11 +18,10 @@
 #include <fstream>
 #include <iostream>
 #include <map>
-#include <numeric>
 #include <set>
 #include <string>
 
-#include "gflags/gflags.h"
+#include <gflags/gflags.h>
 
 DEFINE_string(srtm_dir_path, "", "Path to directory with SRTM files");
 DEFINE_string(mwm_file_path, "", "Path to an mwm file.");
@@ -166,7 +160,7 @@ public:
   void operator()(FeatureType & f, uint32_t const & id)
   {
     f.ParseHeader2();
-    if (!GetBicycleModel().IsRoad(f))
+    if (!GetBicycleModel().IsRoad(feature::TypesHolder(f)))
     {
       ++m_notRoadCount;
       return;

@@ -5,24 +5,19 @@
 
 #include <functional>
 #include <memory>
-#include <utility>
 #include <vector>
+
 
 namespace base
 {
-namespace thread_pool
-{
-namespace routine
-{
-using namespace threads;
 namespace
 {
 typedef std::function<threads::IRoutine *()> TPopRoutineFn;
 
-class PoolRoutine : public IRoutine
+class PoolRoutine : public threads::IRoutine
 {
 public:
-  PoolRoutine(const TPopRoutineFn & popFn, const TFinishRoutineFn & finishFn)
+  PoolRoutine(const TPopRoutineFn & popFn, const ThreadPool::TFinishRoutineFn & finishFn)
     : m_popFn(popFn)
     , m_finishFn(finishFn)
   {
@@ -32,7 +27,7 @@ public:
   {
     while (!IsCancelled())
     {
-      threads::IRoutine * task = m_popFn();
+      IRoutine * task = m_popFn();
       if (task == NULL)
       {
         Cancel();
@@ -47,7 +42,7 @@ public:
 
 private:
   TPopRoutineFn m_popFn;
-  TFinishRoutineFn m_finishFn;
+  ThreadPool::TFinishRoutineFn m_finishFn;
 };
 } // namespace
 
@@ -59,8 +54,8 @@ public:
     ASSERT_GREATER(size, 0, ());
     for (auto & thread : m_threads)
     {
-      thread.reset(new threads::Thread());
-      thread->Create(std::make_unique<PoolRoutine>(std::bind(&ThreadPool::Impl::PopFront, this), m_finishFn));
+      thread = std::make_unique<threads::Thread>();
+      thread->Create(std::make_unique<PoolRoutine>(std::bind(&Impl::PopFront, this), m_finishFn));
     }
   }
 
@@ -127,7 +122,7 @@ void ThreadPool::PushBack(threads::IRoutine * routine)
   m_impl->PushBack(routine);
 }
 
-void ThreadPool::PushFront(IRoutine * routine)
+void ThreadPool::PushFront(threads::IRoutine * routine)
 {
   m_impl->PushFront(routine);
 }
@@ -136,25 +131,5 @@ void ThreadPool::Stop()
 {
   m_impl->Stop();
 }
-}  // namespace routine
 
-namespace routine_simple
-{
-ThreadPool::ThreadPool(size_t reserve) { m_pool.reserve(reserve); }
-
-void ThreadPool::Add(std::unique_ptr<threads::IRoutine> && routine)
-{
-  m_pool.emplace_back(new threads::Thread());
-  m_pool.back()->Create(move(routine));
-}
-
-void ThreadPool::Join()
-{
-  for (auto & thread : m_pool)
-    thread->Join();
-}
-
-threads::IRoutine * ThreadPool::GetRoutine(size_t i) const { return m_pool[i]->GetRoutine(); }
-}  // namespace routine_simple
-}  // namespace thread_pool
-}  // namespace base
+} // namespace base

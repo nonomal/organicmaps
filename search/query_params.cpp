@@ -3,22 +3,18 @@
 #include "search/ranking_utils.hpp"
 #include "search/token_range.hpp"
 
-#include "indexer/feature_impl.hpp"
-
 #include <map>
 #include <sstream>
 
 namespace search
 {
 using namespace std;
-using namespace strings;
 
 namespace
 {
 // All synonyms should be lowercase.
 
-// @todo These should check the map language and use
-// only the corresponding translation.
+/// @todo These should check the map language and use only the corresponding translation.
 map<string, vector<string>> const kSynonyms = {
     {"n",    {"north"}},
     {"w",    {"west"}},
@@ -28,22 +24,58 @@ map<string, vector<string>> const kSynonyms = {
     {"ne",   {"northeast"}},
     {"sw",   {"southwest"}},
     {"se",   {"southeast"}},
+
+    /// @todo Should not duplicate Street synonyms defined in StreetsSynonymsHolder (avoid useless double queries).
+    /// Remove "street" and "avenue" here, but should update GetNameScore.
     {"st",   {"saint", "street"}},
-    {"blvd", {"boulevard"}},
-    {"cir",  {"circle"}},
-    {"ct",   {"court"}},
-    {"rt",   {"route"}},
+    {"dr",   {"doctor"}},
+
+    // widely used in LATAM, like "Ntra Sra Asuncion Zelaya"
+    {"ntra",  {"nuestra"}},
+    {"sra",   {"senora"}},
+    {"sta",   {"santa"}},
+
+    {"al",    {"allee", "alle"}},
+    {"ave",   {"avenue"}},
+    /// @todo Should process synonyms with errors like "blvrd" -> "blvd".
+    /// @see HouseOnStreetSynonymsWithMisprints test.
+    {"blvd",  {"boulevard"}},
+    {"blvrd", {"boulevard"}},
+    {"cir",   {"circle"}},
+    {"ct",    {"court"}},
+    {"hwy",   {"highway"}},
+    {"pl",    {"place", "platz"}},
+    {"rt",    {"route"}},
+    {"sq",    {"square"}},
+
+    {"ал",    {"аллея", "алея"}},
+    {"бул",   {"бульвар"}},
+    {"зав",   {"завулак"}},
+    {"кв",    {"квартал"}},
+    {"наб",   {"набережная", "набярэжная", "набережна"}},
+    {"пер",   {"переулок"}},
+    {"пл",    {"площадь", "площа"}},
+    {"пр",    {"проспект", "праспект", "провулок", "проезд", "праезд", "проїзд"}},
+    {"туп",   {"тупик", "тупік"}},
+    {"ш",     {"шоссе", "шаша", "шосе"}},
+
+    {"cd",    {"caddesi"}},
+
     {"св",   {"святой", "святого", "святая", "святые", "святых", "свято"}},
     {"б",    {"большая", "большой"}},
     {"бол",  {"большая", "большой"}},
     {"м",    {"малая", "малый"}},
     {"мал",  {"малая", "малый"}},
     {"нов",  {"новая", "новый"}},
-    {"стар", {"старая", "старый"}}};
+    {"стар", {"старая", "старый"}},
+};
 }  // namespace
 
 // QueryParams::Token ------------------------------------------------------------------------------
-void QueryParams::Token::AddSynonym(string const & s) { AddSynonym(MakeUniString(s)); }
+void QueryParams::Token::AddSynonym(string const & s)
+{
+  AddSynonym(strings::MakeUniString(s));
+}
 
 void QueryParams::Token::AddSynonym(String const & s)
 {
@@ -179,19 +211,21 @@ void QueryParams::AddSynonyms()
   {
     string const ss = ToUtf8(MakeLowerCase(token.GetOriginal()));
     auto const it = kSynonyms.find(ss);
-    if (it == kSynonyms.end())
-      continue;
-
-    for (auto const & synonym : it->second)
-      token.AddSynonym(synonym);
+    if (it != kSynonyms.end())
+    {
+      for (auto const & synonym : it->second)
+        token.AddSynonym(synonym);
+    }
   }
   if (m_hasPrefix)
   {
     string const ss = ToUtf8(MakeLowerCase(m_prefixToken.GetOriginal()));
     auto const it = kSynonyms.find(ss);
     if (it != kSynonyms.end())
+    {
       for (auto const & synonym : it->second)
         m_prefixToken.AddSynonym(synonym);
+    }
   }
 }
 

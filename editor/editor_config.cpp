@@ -39,7 +39,11 @@ static std::unordered_map<std::string, EType> const kNamesToFMD = {
     // {"", EType::FMD_MIN_HEIGHT},
     {"denomination", EType::FMD_DENOMINATION},
     {"building:levels", EType::FMD_BUILDING_LEVELS},
-    {"level", EType::FMD_LEVEL}
+    {"level", EType::FMD_LEVEL},
+    {"drive_through", EType::FMD_DRIVE_THROUGH},
+    {"website_menu", EType::FMD_WEBSITE_MENU},
+    {"self_service", EType::FMD_SELF_SERVICE},
+    {"outdoor_seating", EType::FMD_OUTDOOR_SEATING}
     /// @todo Add description?
 };
 
@@ -83,7 +87,7 @@ bool TypeDescriptionFromXml(pugi::xml_node const & root, pugi::xml_node const & 
     auto const node = xNode.node();
     std::string const groupName = node.attribute("group").value();
 
-    std::string const xpath = "/mapsme/editor/fields/field_group[@name='" + groupName + "']";
+    std::string const xpath = "/omaps/editor/fields/field_group[@name='" + groupName + "']";
     auto const group = root.select_node(xpath.data()).node();
     ASSERT(group, ("No such group", groupName));
 
@@ -110,7 +114,7 @@ bool TypeDescriptionFromXml(pugi::xml_node const & root, pugi::xml_node const & 
 std::vector<pugi::xml_node> GetPrioritizedTypes(pugi::xml_node const & node)
 {
   std::vector<pugi::xml_node> result;
-  for (auto const & xNode : node.select_nodes("/mapsme/editor/types/type[@id]"))
+  for (auto const & xNode : node.select_nodes("/omaps/editor/types/type[@id]"))
     result.push_back(xNode.node());
   stable_sort(begin(result), end(result),
               [](pugi::xml_node const & lhs, pugi::xml_node const & rhs) {
@@ -164,7 +168,7 @@ bool EditorConfig::GetTypeDescription(std::vector<std::string> classificatorType
 std::vector<std::string> EditorConfig::GetTypesThatCanBeAdded() const
 {
   auto const xpathResult =
-      m_document.select_nodes("/mapsme/editor/types/type[not(@can_add='no' or @editable='no')]");
+      m_document.select_nodes("/omaps/editor/types/type[not(@can_add='no' or @editable='no')]");
 
   std::vector<std::string> result;
   for (auto const & xNode : xpathResult)

@@ -2,13 +2,14 @@
 
 #include "indexer/feature.hpp"
 #include "indexer/feature_algo.hpp"
-#include "indexer/feature_utils.hpp"
 #include "indexer/ftypes_matcher.hpp"
+#include "indexer/road_shields_parser.hpp"
 
 #include "geometry/mercator.hpp"
 
 #include "platform/localization.hpp"
 #include "platform/measurement_utils.hpp"
+#include "platform/distance.hpp"
 
 #include "base/logging.hpp"
 #include "base/string_utils.hpp"
@@ -16,31 +17,6 @@
 namespace osm
 {
 using namespace std;
-
-namespace
-{
-constexpr char const * kWlan = "wlan";
-constexpr char const * kWired = "wired";
-constexpr char const * kTerminal = "terminal";
-constexpr char const * kYes = "yes";
-constexpr char const * kNo = "no";
-}  // namespace
-
-char const * MapObject::kFieldsSeparator = " • ";
-
-string DebugPrint(osm::Internet internet)
-{
-  switch (internet)
-  {
-  case Internet::No: return kNo;
-  case Internet::Yes: return kYes;
-  case Internet::Wlan: return kWlan;
-  case Internet::Wired: return kWired;
-  case Internet::Terminal: return kTerminal;
-  case Internet::Unknown: break;
-  }
-  return {};
-}
 
 void MapObject::SetFromFeatureType(FeatureType & ft)
 {
@@ -53,25 +29,29 @@ void MapObject::SetFromFeatureType(FeatureType & ft)
   {
     return !cl.IsTypeValid(t);
   });
-  // Actually, we can't select object on map with invalid (non-drawable type).
+  // Actually, we can't select object on map with invalid (non-drawable or deprecated) type.
+  // TODO: in android prod a user will see an "empty" PP if a spot is selected in old mwm
+  // where a deprecated feature was; and could crash if play with routing to it, bookmarking it..
+  // A desktop/qt prod segfaults when trying to select such spots.
   ASSERT(!m_types.Empty(), ());
 
   m_metadata = ft.GetMetadata();
   m_houseNumber = ft.GetHouseNumber();
-  m_roadNumber = ft.GetRoadNumber();
+  m_roadShields = ftypes::GetRoadShieldsNames(ft);
   m_featureID = ft.GetID();
   m_geomType = ft.GetGeomType();
+  m_layer = ft.GetLayer();
+
+  // TODO: BEST_GEOMETRY is likely needed for some special cases only,
+  // i.e. matching an edited OSM feature, in other cases like opening
+  // a place page WORST_GEOMETRY is going to be enough?
   if (m_geomType == feature::GeomType::Area)
-  {
-    m_triangles = ft.GetTrianglesAsPoints(FeatureType::BEST_GEOMETRY);
-  }
+    assign_range(m_triangles, ft.GetTrianglesAsPoints(FeatureType::BEST_GEOMETRY));
   else if (m_geomType == feature::GeomType::Line)
-  {
-    ft.ParseGeometry(FeatureType::BEST_GEOMETRY);
-    m_points.reserve(ft.GetPointsCount());
-    ft.ForEachPoint([this](m2::PointD const & p) { m_points.push_back(p); },
-                    FeatureType::BEST_GEOMETRY);
-  }
+    assign_range(m_points, ft.GetPoints(FeatureType::BEST_GEOMETRY));
+    
+  // Fill runtime metadata
+  m_metadata.Set(feature::Metadata::EType::FMD_WHEELCHAIR, feature::GetReadableWheelchairType(m_types));
 
 #ifdef DEBUG
   if (ftypes::IsWifiChecker::Instance()(ft))
@@ -105,13 +85,55 @@ std::string_view MapObject::GetPostcode() const
   return m_metadata.Get(MetadataID::FMD_POSTCODE);
 }
 
-string MapObject::GetLocalizedType() const
+std::string MapObject::GetLocalizedType() const
 {
   ASSERT(!m_types.Empty(), ());
   feature::TypesHolder copy(m_types);
   copy.SortBySpec();
 
-  return platform::GetLocalizedTypeName(classif().GetReadableObjectName(*copy.begin()));
+  return platform::GetLocalizedTypeName(classif().GetReadableObjectName(copy.GetBestType()));
+}
+
+std::string MapObject::GetLocalizedAllTypes(bool withMainType) const
+{
+  ASSERT(!m_types.Empty(), ());
+  feature::TypesHolder copy(m_types);
+  copy.SortBySpec();
+
+  auto const & isPoi = ftypes::IsPoiChecker::Instance();
+  auto const & amenityChecker = ftypes::IsAmenityChecker::Instance();
+
+  std::ostringstream oss;
+  bool isMainType = true;
+  bool isFirst = true;
+  for (auto const type : copy)
+  {
+    if (isMainType && !withMainType)
+    {
+      isMainType = false;
+      continue;
+    }
+
+    // Ignore types that are not POI
+    if (!isMainType && !isPoi(type))
+      continue;
+      
+    // Ignore general amenity
+    if (!isMainType && amenityChecker.GetType() == type)
+      continue;
+      
+    isMainType = false;
+    
+    // Add fields separator between types
+    if (isFirst)
+      isFirst = false;
+    else
+      oss << feature::kFieldsSeparator;
+    
+    oss << platform::GetLocalizedTypeName(classif().GetReadableObjectName(type));
+  }
+  
+  return oss.str();
 }
 
 std::string_view MapObject::GetMetadata(MetadataID type) const
@@ -119,31 +141,14 @@ std::string_view MapObject::GetMetadata(MetadataID type) const
   return m_metadata.Get(type);
 }
 
-Internet InternetFromString(std::string_view inet)
-{
-  if (inet.empty())
-    return Internet::Unknown;
-  if (inet.find(kWlan) != string::npos)
-    return Internet::Wlan;
-  if (inet.find(kWired) != string::npos)
-    return Internet::Wired;
-  if (inet.find(kTerminal) != string::npos)
-    return Internet::Terminal;
-  if (inet == kYes)
-    return Internet::Yes;
-  if (inet == kNo)
-    return Internet::No;
-  return Internet::Unknown;
-}
-
 std::string_view MapObject::GetOpeningHours() const
 {
   return m_metadata.Get(MetadataID::FMD_OPEN_HOURS);
 }
 
-Internet MapObject::GetInternet() const
+feature::Internet MapObject::GetInternet() const
 {
-  return InternetFromString(m_metadata.Get(MetadataID::FMD_INTERNET));
+  return feature::InternetFromString(m_metadata.Get(MetadataID::FMD_INTERNET));
 }
 
 vector<string> MapObject::GetCuisines() const { return feature::GetCuisines(m_types); }
@@ -160,19 +165,29 @@ vector<string> MapObject::GetLocalizedRecyclingTypes() const
   return feature::GetLocalizedRecyclingTypes(m_types);
 }
 
-string MapObject::FormatCuisines() const
+string MapObject::GetLocalizedFeeType() const
 {
-  return strings::JoinStrings(GetLocalizedCuisines(), kFieldsSeparator);
+  return feature::GetLocalizedFeeType(m_types);
 }
 
-vector<string> MapObject::GetRoadShields() const
+bool MapObject::HasAtm() const
 {
-  return feature::GetRoadShieldsNames(m_roadNumber);
+  return feature::HasAtm(m_types);
+}
+
+bool MapObject::HasToilets() const
+{
+  return feature::HasToilets(m_types);
+}
+
+string MapObject::FormatCuisines() const
+{
+  return strings::JoinStrings(GetLocalizedCuisines(), feature::kFieldsSeparator);
 }
 
 string MapObject::FormatRoadShields() const
 {
-  return strings::JoinStrings(GetRoadShields(), kFieldsSeparator);
+  return strings::JoinStrings(m_roadShields, feature::kFieldsSeparator);
 }
 
 int MapObject::GetStars() const
@@ -189,27 +204,8 @@ int MapObject::GetStars() const
   return count;
 }
 
-string MapObject::GetElevationFormatted() const
-{
-  auto const sv = m_metadata.Get(MetadataID::FMD_ELE);
-  if (!sv.empty())
-  {
-    double value;
-    if (strings::to_double(sv, value))
-      return measurement_utils::FormatAltitude(value);
-    else
-      LOG(LWARNING, ("Invalid elevation metadata:", sv));
-  }
-  return {};
-}
-
-ftraits::WheelchairAvailability MapObject::GetWheelchairType() const
-{
-  auto const opt = ftraits::Wheelchair::GetValue(m_types);
-  return opt ? *opt : ftraits::WheelchairAvailability::No;
-}
-
 bool MapObject::IsPointType() const { return m_geomType == feature::GeomType::Point; }
 bool MapObject::IsBuilding() const { return ftypes::IsBuildingChecker::Instance()(m_types); }
+bool MapObject::IsPublicTransportStop() const { return ftypes::IsPublicTransportStopChecker::Instance()(m_types); }
 
 }  // namespace osm

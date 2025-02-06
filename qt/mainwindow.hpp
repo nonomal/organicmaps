@@ -50,12 +50,11 @@ class MainWindow : public QMainWindow, location::LocationObserver
 
   enum LayerType : uint8_t
   {
-    TRAFFIC = 0,
-    TRANSIT,      // Metro scheme
+    /// @todo Uncomment when we will integrate a traffic provider.
+    // TRAFFIC = 0,
+    TRANSIT = 0,      // Metro scheme
     ISOLINES,
-
-    // Should be the last
-    COUNT
+    OUTDOORS,
   };
   PopupMenuHolder * m_layers = nullptr;
   PopupMenuHolder * m_routing = nullptr;
@@ -74,14 +73,12 @@ class MainWindow : public QMainWindow, location::LocationObserver
   Q_OBJECT
 
 public:
-  MainWindow(Framework & framework, bool apiOpenGLES3, std::unique_ptr<ScreenshotParams> && screenshotParams,
+  MainWindow(Framework & framework, std::unique_ptr<ScreenshotParams> && screenshotParams,
              QRect const & screenGeometry
 #ifdef BUILD_DESIGNER
              , QString const & mapcssFilePath = QString()
 #endif
             );
-
-  static void SetDefaultSurfaceFormat(bool apiOpenGLES3);
 
 protected:
   Framework & GetFramework() const;
@@ -98,9 +95,9 @@ protected:
 
   void SetLayerEnabled(LayerType type, bool enable);
 
-#if defined(Q_WS_WIN)
+#if defined(OMIM_OS_WINDOWS)
   /// to handle menu messages
-  bool winEvent(MSG * msg, long * result) override;
+  bool nativeEvent(QByteArray const & eventType, void * message, qintptr * result) override;
 #endif
 
   void closeEvent(QCloseEvent * e) override;
